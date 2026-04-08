@@ -1,0 +1,31 @@
+# Dependencies
+node_modules
+frontend/node_modules
+frontend/.next
+frontend/out
+
+# Build outputs
+static/
+
+# Generated media (mount as volume at runtime)
+output/
+
+# Git
+.git
+
+# Python
+__pycache__
+*.pyc
+venv/
+.venv/
+
+# Secrets (never bake into image)
+.env
+.env.local
+
+# Dev tools
+.DS_Store
+*.log
+.agent/
+.claude/
+demand/

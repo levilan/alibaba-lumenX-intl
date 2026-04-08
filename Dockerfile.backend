@@ -1,0 +1,25 @@
+FROM python:3.11-slim
+
+# Install FFmpeg and curl (for healthcheck)
+RUN apt-get update && apt-get install -y --no-install-recommends     ffmpeg     curl     && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install Python dependencies
+COPY requirements-docker.txt requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application source
+COPY src/ src/
+
+# Create output directories
+RUN mkdir -p output/uploads output/video output/assets output/storyboard     output/audio/dialogue output/audio/sfx output/audio/bgm     output/export output/temp
+
+# Proxy bypass for Alibaba Cloud services
+ENV NO_PROXY="*.aliyuncs.com,localhost,127.0.0.1"
+ENV no_proxy="*.aliyuncs.com,localhost,127.0.0.1"
+ENV PYTHONUNBUFFERED=1
+
+EXPOSE 17177
+
+CMD ["python", "-m", "uvicorn", "src.apps.comic_gen.api:app", "--host", "0.0.0.0", "--port", "17177"]

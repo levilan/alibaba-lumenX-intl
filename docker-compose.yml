@@ -1,0 +1,37 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: lumenx-backend
+    env_file:
+      - .env
+    environment:
+      - NO_PROXY=*.aliyuncs.com,localhost,127.0.0.1
+      - no_proxy=*.aliyuncs.com,localhost,127.0.0.1
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./output:/app/output
+    ports:
+      - "17177:17177"   # Expose for debugging; remove in production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:17177/projects/')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: lumenx-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
