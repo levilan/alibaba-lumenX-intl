@@ -51,8 +51,8 @@ class WanxModel(VideoGenModel):
             return "dashscope"
 
     def _resolver_model_for_media(self, model_name: str) -> str:
-        # `wan2.5-i2v` follows the same DashScope media transport profile as `wan2.6-i2v`.
-        if (model_name or "").strip().lower() == "wan2.5-i2v":
+        # wan2.5 i2v models follow the same DashScope media transport profile as `wan2.6-i2v`.
+        if (model_name or "").strip().lower() in ("wan2.5-i2v", "wan2.5-i2v-preview"):
             return "wan2.6-i2v"
         return model_name
 
@@ -157,6 +157,7 @@ class WanxModel(VideoGenModel):
             )
 
         policy_body = policy_resp.json()
+        logger.debug(f"DashScope upload policy response: {policy_body}")
         policy_data = policy_body.get("output") or policy_body.get("data") or policy_body
 
         upload_host = policy_data.get("upload_host") or policy_data.get("host")
@@ -174,7 +175,11 @@ class WanxModel(VideoGenModel):
             filename = os.path.basename(local_path)
             object_key = f"{upload_dir.rstrip('/')}/{filename}" if upload_dir else filename
 
-        form_data: Dict[str, str] = {"key": object_key}
+        form_data: Dict[str, str] = {
+            "key": object_key,
+            "x-oss-object-acl": "private",
+            "x-oss-forbid-overwrite": "true",
+        }
         field_map = {
             "policy": "policy",
             "signature": "signature",
@@ -257,8 +262,8 @@ class WanxModel(VideoGenModel):
             uploader = OSSImageUploader()
             extra_media_headers: Dict[str, str] = {}
 
-            # Use HTTP API for wan2.6-i2v, wan2.5-i2v, or wan2.6-r2v
-            if final_model_name in ['wan2.6-i2v', 'wan2.6-i2v-flash', 'wan2.5-i2v']:
+            # Use HTTP API for wan2.6-i2v, wan2.5-i2v variants, or wan2.6-r2v
+            if final_model_name in ['wan2.6-i2v', 'wan2.6-i2v-flash', 'wan2.5-i2v', 'wan2.5-i2v-preview']:
                 resolver_model = self._resolver_model_for_media(final_model_name)
                 backend = self._resolve_provider_backend_for_model(resolver_model)
                 temp_url_resolver = self._build_dashscope_temp_url_resolver(resolver_model)

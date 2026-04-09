@@ -74,11 +74,10 @@ class TTSProcessor:
         if self.api_key:
             dashscope.api_key = self.api_key
 
-        # Set WebSocket URL for international endpoint if configured
-        ws_url = os.getenv('DASHSCOPE_WEBSOCKET_URL')
-        if ws_url:
-            dashscope.base_websocket_api_url = ws_url
-            logger.info(f"DashScope WebSocket URL set to: {ws_url}")
+        # Set WebSocket URL to international endpoint (default)
+        ws_url = os.getenv('DASHSCOPE_WEBSOCKET_URL', 'wss://dashscope-intl.aliyuncs.com/api-ws/v1/inference')
+        dashscope.base_websocket_api_url = ws_url
+        logger.info(f"DashScope WebSocket URL set to: {ws_url}")
 
         self.model = model
         self.voice = voice
@@ -115,7 +114,7 @@ class TTSProcessor:
         voice = voice or self.voice
 
         # Check if v2 voice is being used on international endpoint
-        ws_url = os.getenv('DASHSCOPE_WEBSOCKET_URL', '')
+        ws_url = os.getenv('DASHSCOPE_WEBSOCKET_URL', 'wss://dashscope-intl.aliyuncs.com/api-ws/v1/inference')
         if 'intl' in ws_url:
             resolved_model = self._resolve_model_for_voice(voice)
             if resolved_model == 'cosyvoice-v2':
@@ -178,7 +177,7 @@ class TTSProcessor:
         only v3 voices are returned since v2 is unavailable internationally.
         """
         import os
-        ws_url = os.getenv('DASHSCOPE_WEBSOCKET_URL', '')
+        ws_url = os.getenv('DASHSCOPE_WEBSOCKET_URL', 'wss://dashscope-intl.aliyuncs.com/api-ws/v1/inference')
         if 'intl' in ws_url:
             return {k: v for k, v in VOICES.items() if 'v2' not in v.get('model', '')}
         return VOICES

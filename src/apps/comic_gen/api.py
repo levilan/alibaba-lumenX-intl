@@ -39,6 +39,11 @@ env_path = os.path.join(_project_root, ".env")
 if os.path.exists(env_path):
     load_dotenv(env_path, override=True)
 
+# Configure DashScope SDK to use international endpoint
+import dashscope as _dashscope
+_dashscope.base_http_api_url = os.getenv('DASHSCOPE_BASE_URL', 'https://dashscope-intl.aliyuncs.com/api/v1')
+logger.info(f"STARTUP: DashScope base_http_api_url={_dashscope.base_http_api_url}")
+
 # Debug: Print OSS configuration at startup
 logger.info(f"STARTUP: OSS_ENDPOINT={os.getenv('OSS_ENDPOINT')}, OSS_BUCKET_NAME={os.getenv('OSS_BUCKET_NAME')}, OSS_BASE_PATH={os.getenv('OSS_BASE_PATH')}")
 
