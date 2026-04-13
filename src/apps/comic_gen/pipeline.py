@@ -2786,41 +2786,76 @@ class ComicGenPipeline:
             "episodes": created_episodes,
         }
 
+    @staticmethod
+    def _find_marker_position(text: str, marker: str) -> int:
+        """Find marker in text, tolerating whitespace/newline differences from LLM.
+        Strips all whitespace from both sides for comparison, maps back to original position."""
+        if not marker:
+            return -1
+        # Exact match first
+        pos = text.find(marker)
+        if pos >= 0:
+            return pos
+        # Build a whitespace-stripped version of text and a position map
+        import re
+        stripped_text = re.sub(r'\s+', '', text)
+        stripped_marker = re.sub(r'\s+', '', marker)
+        strip_pos = stripped_text.find(stripped_marker)
+        if strip_pos < 0:
+            return -1
+        # Map strip_pos back to original text position
+        # stripped_text[strip_pos] == text[orig_pos] for some orig_pos
+        orig_pos = 0
+        strip_idx = 0
+        while orig_pos < len(text) and strip_idx < strip_pos:
+            if re.match(r'\s', text[orig_pos]):
+                orig_pos += 1  # skip whitespace without advancing strip_idx
+            else:
+                orig_pos += 1
+                strip_idx += 1
+        # Skip any whitespace at orig_pos to land on actual text character
+        while orig_pos < len(text) and re.match(r'\s', text[orig_pos]):
+            orig_pos += 1
+        return orig_pos
+
     def _split_text_by_markers(self, text: str, episodes_data: List[Dict]) -> List[str]:
         """Split text into chunks using start/end markers from LLM.
-        Searches sequentially to avoid overlapping chunks."""
-        chunks = []
-        search_from = 0  # Track position to avoid overlap
+        Uses start markers as boundaries; falls back to equal split if any chunk is empty."""
+        n = len(episodes_data)
 
+        # Collect start positions for each episode (whitespace-tolerant search)
+        start_positions = []
         for ep in episodes_data:
             start_marker = ep.get("start_marker", "")
-            end_marker = ep.get("end_marker", "")
+            pos = self._find_marker_position(text, start_marker)
+            start_positions.append(pos)
 
-            start_idx = search_from
-            end_idx = len(text)
-
-            if start_marker:
-                found = text.find(start_marker, search_from)
-                if found >= 0:
-                    start_idx = found
-
-            if end_marker:
-                found = text.find(end_marker, start_idx)
-                if found >= 0:
-                    end_idx = found + len(end_marker)
-
-            chunks.append(text[start_idx:end_idx])
-            search_from = end_idx  # Next episode starts after this one
-
-        # Fallback: if markers produced empty/overlapping chunks, do equal split
-        if not chunks or all(len(c.strip()) == 0 for c in chunks):
-            chunk_size = max(1, len(text) // len(episodes_data))
+        valid_count = sum(1 for p in start_positions if p >= 0)
+        if valid_count >= 2:
             chunks = []
-            for i in range(len(episodes_data)):
-                start = i * chunk_size
-                end = start + chunk_size if i < len(episodes_data) - 1 else len(text)
-                chunks.append(text[start:end])
+            prev_end = 0
+            for i in range(n):
+                # Start: use found marker position, or end of previous chunk
+                s = start_positions[i] if start_positions[i] >= 0 else prev_end
+                # End: find next episode that has a known position
+                e = len(text)
+                for j in range(i + 1, n):
+                    if start_positions[j] >= 0:
+                        e = start_positions[j]
+                        break
+                chunks.append(text[s:e])
+                prev_end = e
+            # If any chunk is still empty, fall through to equal split
+            if not any(len(c.strip()) == 0 for c in chunks):
+                return chunks
 
+        # Fallback: equal split
+        chunk_size = max(1, len(text) // n)
+        chunks = []
+        for i in range(n):
+            start = i * chunk_size
+            end = start + chunk_size if i < n - 1 else len(text)
+            chunks.append(text[start:end])
         return chunks
 
     # ============================================================
