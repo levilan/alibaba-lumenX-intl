@@ -574,6 +574,19 @@ async def import_series_assets(series_id: str, request: ImportAssetsRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/series/{series_id}/assets/sync_from_episodes")
+async def sync_episode_assets_to_series(series_id: str):
+    """Sync all unique assets from this Series' episodes into the shared asset library."""
+    try:
+        counts = pipeline.sync_episode_assets_to_series(series_id)
+        series = pipeline.get_series(series_id)
+        return signed_response({"series": series.model_dump(), "synced": counts})
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ============================================================
 # File Import & Episode Splitting
 # ============================================================
@@ -1657,6 +1670,18 @@ async def add_frame(script_id: str, request: AddFrameRequest):
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/projects/{script_id}/video_tasks/{task_id}", response_model=Script)
+async def delete_video_task(script_id: str, task_id: str):
+    """Deletes a video task from a project."""
+    try:
+        updated_script = pipeline.delete_video_task(script_id, task_id)
+        return signed_response(updated_script)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.delete("/projects/{script_id}/frames/{frame_id}", response_model=Script)
 async def delete_frame(script_id: str, frame_id: str):

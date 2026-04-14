@@ -83,6 +83,19 @@ export default function VideoGenerator() {
         }
     };
 
+    const handleDeleteTask = async (taskId: string) => {
+        if (!currentProject) return;
+        try {
+            const updatedProject = await api.deleteVideoTask(currentProject.id, taskId);
+            if (updatedProject.video_tasks) {
+                setTasks(updatedProject.video_tasks);
+                updateProject(currentProject.id, { video_tasks: updatedProject.video_tasks });
+            }
+        } catch (error) {
+            console.error("Failed to delete video task:", error);
+        }
+    };
+
     const handleRemix = (task: VideoTask) => {
         setRemixData({
             image_url: task.image_url,
@@ -128,6 +141,7 @@ export default function VideoGenerator() {
                 <VideoSidebar
                     tasks={tasks}
                     onRemix={handleRemix}
+                    onDeleteTask={handleDeleteTask}
                     params={params}
                     setParams={setParams}
                 />

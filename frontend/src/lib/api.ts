@@ -624,6 +624,10 @@ export const api = {
         const response = await axios.post(`${API_URL}/series/${seriesId}/assets/import`, { source_series_id: sourceSeriesId, asset_ids: assetIds });
         return response.data;
     },
+    syncEpisodeAssetsToSeries: async (seriesId: string) => {
+        const response = await axios.post(`${API_URL}/series/${seriesId}/assets/sync_from_episodes`);
+        return response.data;
+    },
 
     // Series Prompt Config
     getSeriesPromptConfig: async (seriesId: string) => {
@@ -737,6 +741,11 @@ export const crudApi = {
         insert_at?: number;
     }) => {
         const res = await axios.post(`${API_URL}/projects/${scriptId}/frames`, data);
+        return res.data;
+    },
+
+    deleteVideoTask: async (scriptId: string, taskId: string) => {
+        const res = await axios.delete(`${API_URL}/projects/${scriptId}/video_tasks/${taskId}`);
         return res.data;
     },
 

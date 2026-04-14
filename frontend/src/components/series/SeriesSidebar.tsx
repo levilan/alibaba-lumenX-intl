@@ -11,6 +11,7 @@ import {
   Settings,
   MessageSquareCode,
   Download,
+  RefreshCw,
 } from "lucide-react";
 import clsx from "clsx";
 import type { Series, Project } from "@/store/projectStore";
@@ -46,6 +47,8 @@ interface SeriesSidebarProps {
   onOpenModelSettings: () => void;
   onOpenPromptConfig: () => void;
   onOpenImportAssets: () => void;
+  onSyncEpisodeAssets: () => void;
+  isSyncingAssets?: boolean;
 }
 
 // ── Asset nav config ──
@@ -80,6 +83,8 @@ export default function SeriesSidebar({
   onOpenModelSettings,
   onOpenPromptConfig,
   onOpenImportAssets,
+  onSyncEpisodeAssets,
+  isSyncingAssets,
 }: SeriesSidebarProps) {
   const getAssetCount = (tab: "characters" | "scenes" | "props") => {
     if (tab === "characters") return series.characters?.length || 0;
@@ -323,6 +328,14 @@ export default function SeriesSidebar({
 
       {/* ── Bottom tools ── */}
       <div className="border-t border-glass-border p-3 space-y-1">
+        <button
+          onClick={onSyncEpisodeAssets}
+          disabled={isSyncingAssets}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <RefreshCw size={16} className={`transition-colors ${isSyncingAssets ? "animate-spin text-blue-400" : "group-hover:text-blue-400"}`} />
+          <span className="text-sm">{isSyncingAssets ? "同步中..." : "同步集数资产"}</span>
+        </button>
         <button
           onClick={onOpenImportAssets}
           className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors group"

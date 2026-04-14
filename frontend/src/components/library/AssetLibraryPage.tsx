@@ -51,8 +51,9 @@ export default function AssetLibraryPage() {
         }
       }
 
-      const standaloneProjects = (projects as Project[]).filter((p) => !p.series_id);
-      for (const p of standaloneProjects) {
+      // Include all projects (standalone and episode projects) to show their assets
+      const allProjects = projects as Project[];
+      for (const p of allProjects) {
         if ((p.characters?.length || 0) + (p.scenes?.length || 0) + (p.props?.length || 0) > 0) {
           result.push({
             id: `project-${p.id}`,

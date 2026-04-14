@@ -193,8 +193,8 @@ export default function ImportAssetsDialog({ isOpen, onClose, seriesId, onImport
                                 <Download size={20} className="text-green-400" />
                             </div>
                             <div>
-                                <h2 className="text-lg font-bold text-white">Import Assets</h2>
-                                <p className="text-xs text-gray-500">Import shared assets from another series</p>
+                                <h2 className="text-lg font-bold text-white">导入共享资产</h2>
+                                <p className="text-xs text-gray-500">从其他系列导入共享资产</p>
                             </div>
                         </div>
                         <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
@@ -217,7 +217,7 @@ export default function ImportAssetsDialog({ isOpen, onClose, seriesId, onImport
                         {/* Step 1: Select source series */}
                         {step === 1 && (
                             <div className="p-5 space-y-3">
-                                <p className="text-sm text-gray-400 mb-4">Select a source series to import assets from</p>
+                                <p className="text-sm text-gray-400 mb-4">选择来源系列以导入其共享资产</p>
                                 {isLoadingSeries ? (
                                     <div className="flex items-center justify-center py-12">
                                         <Loader2 size={24} className="animate-spin text-blue-400" />
@@ -226,7 +226,10 @@ export default function ImportAssetsDialog({ isOpen, onClose, seriesId, onImport
                                 ) : allSeries.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center py-12 text-gray-500">
                                         <Package size={40} className="mb-3 text-gray-600" />
-                                        <p className="text-sm">No other series available for import</p>
+                                        <p className="text-sm font-medium">暂无其他系列可供导入</p>
+                                        <p className="text-xs text-gray-600 mt-2 text-center max-w-xs">
+                                            请先进入集数编辑器，在编辑器中生成角色、场景、道具等资产后，即可在此跨系列导入资产。
+                                        </p>
                                     </div>
                                 ) : (
                                     allSeries.map((s) => {

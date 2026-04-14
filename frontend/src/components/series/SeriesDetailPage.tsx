@@ -38,6 +38,7 @@ export default function SeriesDetailPage({ seriesId }: SeriesDetailPageProps) {
   const [showModelSettings, setShowModelSettings] = useState(false);
   const [showPromptConfig, setShowPromptConfig] = useState(false);
   const [showImportAssets, setShowImportAssets] = useState(false);
+  const [isSyncingAssets, setIsSyncingAssets] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -122,6 +123,18 @@ export default function SeriesDetailPage({ seriesId }: SeriesDetailPageProps) {
     }
   };
 
+  const handleSyncEpisodeAssets = async () => {
+    setIsSyncingAssets(true);
+    try {
+      await api.syncEpisodeAssetsToSeries(seriesId);
+      await refreshSeriesData();
+    } catch (error) {
+      console.error("Failed to sync episode assets:", error);
+    } finally {
+      setIsSyncingAssets(false);
+    }
+  };
+
   // ── Loading ──
   if (loading) {
     return (
@@ -180,6 +193,8 @@ export default function SeriesDetailPage({ seriesId }: SeriesDetailPageProps) {
         onOpenModelSettings={() => setShowModelSettings(true)}
         onOpenPromptConfig={() => setShowPromptConfig(true)}
         onOpenImportAssets={() => setShowImportAssets(true)}
+        onSyncEpisodeAssets={handleSyncEpisodeAssets}
+        isSyncingAssets={isSyncingAssets}
       />
 
       {/* ── Content Area ── */}

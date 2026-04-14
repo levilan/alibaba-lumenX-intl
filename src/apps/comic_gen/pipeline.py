@@ -1081,6 +1081,17 @@ class ComicGenPipeline:
         self._save_data()
         return script
 
+    def delete_video_task(self, script_id: str, task_id: str) -> Script:
+        script = self.scripts.get(script_id)
+        if not script:
+            raise ValueError("Script not found")
+        original_count = len(script.video_tasks)
+        script.video_tasks = [t for t in script.video_tasks if t.id != task_id]
+        if len(script.video_tasks) == original_count:
+            raise ValueError("Video task not found")
+        self._save_data()
+        return script
+
     def delete_frame(self, script_id: str, frame_id: str) -> Script:
         script = self.scripts.get(script_id)
         if not script:
@@ -3018,6 +3029,105 @@ class ComicGenPipeline:
             target.updated_at = time.time()
             self._save_series_data_unlocked()
             return target, imported_ids, skipped_ids
+
+    def sync_episode_assets_to_series(self, series_id: str) -> Dict[str, int]:
+        """Copy all unique assets from series episodes into the series shared library.
+        Assets already present in the series (by ID) are skipped.
+        Returns counts: {characters, scenes, props}."""
+        import copy
+        with self._save_lock:
+            series = self.series_store.get(series_id)
+            if not series:
+                raise ValueError("Series not found")
+
+            existing_ids = set()
+            for c in series.characters:
+                existing_ids.add(c.id)
+            for s in series.scenes:
+                existing_ids.add(s.id)
+            for p in series.props:
+                existing_ids.add(p.id)
+
+            counts = {"characters": 0, "scenes": 0, "props": 0}
+            for ep_id in series.episode_ids:
+                script = self.scripts.get(ep_id)
+                if not script:
+                    continue
+                for char in script.characters:
+                    if char.id not in existing_ids:
+                        new_asset = copy.deepcopy(char)
+                        series.characters.append(new_asset)
+                        existing_ids.add(char.id)
+                        counts["characters"] += 1
+                for scene in script.scenes:
+                    if scene.id not in existing_ids:
+                        new_asset = copy.deepcopy(scene)
+                        series.scenes.append(new_asset)
+                        existing_ids.add(scene.id)
+                        counts["scenes"] += 1
+                for prop in script.props:
+                    if prop.id not in existing_ids:
+                        new_asset = copy.deepcopy(prop)
+                        series.props.append(new_asset)
+                        existing_ids.add(prop.id)
+                        counts["props"] += 1
+
+            series.updated_at = time.time()
+            self._save_series_data_unlocked()
+            return counts
+
+    def delete_series_asset(self, series_id: str, asset_id: str, asset_type: str) -> Series:
+        """Remove an entire asset (character/scene/prop) from the series shared library."""
+        with self._save_lock:
+            series = self.series_store.get(series_id)
+            if not series:
+                raise ValueError("Series not found")
+            if asset_type == "character":
+                series.characters = [c for c in series.characters if c.id != asset_id]
+            elif asset_type == "scene":
+                series.scenes = [s for s in series.scenes if s.id != asset_id]
+            elif asset_type == "prop":
+                series.props = [p for p in series.props if p.id != asset_id]
+            else:
+                raise ValueError(f"Unknown asset_type: {asset_type}")
+            series.updated_at = time.time()
+            self._save_series_data_unlocked()
+            return series
+
+    def delete_series_asset_variant(self, series_id: str, asset_id: str, variant_id: str) -> Series:
+        """Delete a specific image variant from a series-level asset (searches all types)."""
+        with self._save_lock:
+            series = self.series_store.get(series_id)
+            if not series:
+                raise ValueError("Series not found")
+            # Search characters
+            for char in series.characters:
+                if char.id == asset_id:
+                    self._delete_variant_in_asset(char.full_body_asset, variant_id)
+                    self._delete_variant_in_asset(char.three_view_asset, variant_id)
+                    self._delete_variant_in_asset(char.headshot_asset, variant_id)
+                    series.updated_at = time.time()
+                    self._save_series_data_unlocked()
+                    return series
+            # Search scenes
+            for scene in series.scenes:
+                if scene.id == asset_id:
+                    self._delete_variant_in_asset(scene.image_asset, variant_id)
+                    if scene.image_asset and not scene.image_asset.selected_id:
+                        scene.image_url = None
+                    series.updated_at = time.time()
+                    self._save_series_data_unlocked()
+                    return series
+            # Search props
+            for prop in series.props:
+                if prop.id == asset_id:
+                    self._delete_variant_in_asset(prop.image_asset, variant_id)
+                    if prop.image_asset and not prop.image_asset.selected_id:
+                        prop.image_url = None
+                    series.updated_at = time.time()
+                    self._save_series_data_unlocked()
+                    return series
+            raise ValueError("Asset not found in series")
 
     def get_effective_prompt(self, prompt_type: str, episode: Script, series: Optional[Series] = None) -> str:
         """Three-level fallback: Episode -> Series -> system default."""
