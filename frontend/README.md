@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LumenX Studio — 前端
 
-## Getting Started
+LumenX Studio 的前端介面，基於 [Next.js 14](https://nextjs.org) 開發，使用 React 18、TypeScript 與 Tailwind CSS。
 
-First, run the development server:
+## 本機啟動
 
 ```bash
+npm install --legacy-peer-deps
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+開啟瀏覽器至 [http://localhost:3000](http://localhost:3000) 即可看到介面。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+> 後端 API 需同時在 `http://localhost:17177` 運行，完整啟動方式請參閱根目錄 [README.md](../README.md)。
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 可用指令
 
-## Learn More
+| 指令 | 說明 |
+|------|------|
+| `npm run dev` | 啟動開發伺服器（含 Hot Reload） |
+| `npm run build` | 建置正式版靜態檔案 |
+| `npm run start` | 啟動正式版伺服器 |
+| `npm run lint` | 執行 ESLint 程式碼檢查 |
 
-To learn more about Next.js, take a look at the following resources:
+## 技術堆疊
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Next.js 14** — App Router 架構
+- **React 18** — UI 元件框架
+- **TypeScript** — 型別安全
+- **Tailwind CSS** — 樣式系統
+- **Three.js** — 3D 視覺效果
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 目錄結構
 
-## Deploy on Vercel
+```
+frontend/
+├── src/
+│   ├── app/              # Next.js App Router 頁面
+│   └── components/       # 依工作流程步驟分組的 UI 元件
+├── public/               # 靜態資源
+├── tailwind.config.ts    # Tailwind 設定
+└── next.config.ts        # Next.js 設定
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 相關文件
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [專案總覽 README](../README.md)
+- [使用手冊](../USER_MANUAL.md)
+- [Next.js 官方文件](https://nextjs.org/docs)
